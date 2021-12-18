@@ -1,4 +1,4 @@
-package main
+package includes
 
 import (
 	"io/ioutil"
@@ -17,8 +17,8 @@ var ignorePaths = []string{
 	"internal",
 }
 
-// protoIncludes returns the modules that contain *.proto files
-func protoIncludes() (modules, error) {
+// goModules returns the modules that contain *.proto files
+func GoMod() (Modules, error) {
 	mods := exec.Command("go", "list", "-f", "{{.Path}}={{.Dir}}", "-m", "all")
 	mods.Stderr = os.Stderr
 	out, err := mods.Output()
@@ -26,7 +26,7 @@ func protoIncludes() (modules, error) {
 		return nil, cling.Wrap(err, "unable to get go modules")
 	}
 
-	protoMods := modules{}
+	protoMods := Modules{}
 	for _, mod := range strings.Split(string(out), "\n") {
 		if mod == "" {
 			continue
@@ -74,7 +74,7 @@ func protoIncludes() (modules, error) {
 
 // linkTmp links the module into a temporary directory, and returns both the
 // module with a relative path, and a module with a fully-resolved path
-func linkMod(name, modPath string) ([]module, error) {
+func linkMod(name, modPath string) (Modules, error) {
 	tmp, err := ioutil.TempDir("", "protoc-")
 	if err != nil {
 		return nil, cling.Wrap(err, "unable to create temporary directory")
@@ -91,7 +91,7 @@ func linkMod(name, modPath string) ([]module, error) {
 		return nil, cling.Wrap(err, "unable to symlink module")
 	}
 
-	return []module{
+	return Modules{
 		{
 			Name:        name,
 			Path:        modPath,
@@ -106,20 +106,3 @@ func linkMod(name, modPath string) ([]module, error) {
 		},
 	}, nil
 }
-
-/*
-	tmp, err := ioutil.TempDir("", "protoc-")
-	if err != nil {
-		return nil, cling.Wrap(err, "unable to create temp dir")
-	}
-
-	err = os.Symlink(mod.Path, filepath.Join(tmp, mod.Name))
-	if err != nil {
-		return nil, cling.Wrap(err, "unable to symlink module")
-	}
-
-	mod.Path = tmp
-	mod.CleanupFunc = func() error { return os.RemoveAll(tmp) }
-
-	return &mod, nil
-}*/

@@ -6,26 +6,16 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strings"
+
+	"github.com/jbowes/cling"
+	"github.com/unerror/id-hub/tools/protoc/includes"
+	"github.com/unerror/id-hub/tools/protoc/mod"
 )
-
-type includesFlag []string
-
-func (i *includesFlag) String() string {
-	return strings.Join(*i, ",")
-}
-
-func (i *includesFlag) Set(value string) error {
-	*i = append(*i, value)
-	return nil
-}
-
-var includeRemote includesFlag
 
 func main() {
 	path := flag.String("proto-path", "", "proto file(s) to compile")
 	swaggerOut := flag.String("swagger-out", ".", "output path")
-	flag.Var(&includeRemote, "include-remote-git", "include remote modules")
+	includeRemote := flag.String("config", "", "protoc tool config file")
 	flag.Parse()
 
 	if swaggerOut != nil {
@@ -43,11 +33,11 @@ func main() {
 		path = &p
 	}
 
-	mods, err := protoIncludes()
+	mods, err := getIncludes(*includeRemote)
 	if err != nil {
 		panic(err)
 	}
-	//defer mods.Cleanup()
+	defer mods.Cleanup()
 
 	cmd := exec.Command(
 		"protoc",
@@ -70,4 +60,43 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+}
+
+func getIncludes(remotes string) (includes.Modules, error) {
+	f, err := mod.Parse(remotes)
+	if err != nil {
+		return nil, cling.Wrap(err, "unable to parse go.mod")
+	}
+
+	mods := includes.Modules{}
+
+	if f.Go != nil {
+		gms, err := includes.GoMod()
+		if err != nil {
+			return nil, cling.Wrap(err, "unable to get proto includes from go modules")
+		}
+
+		mods = append(mods, gms...)
+	}
+
+	for _, d := range f.Dependencies {
+		switch d.Type {
+		case "git":
+			gms, err := includes.Git(d.Require, d.Cache)
+			if err != nil {
+				return nil, cling.Wrap(err, "unable to get proto includes from git")
+			}
+			mods = append(mods, gms...)
+		case "local":
+			gms, err := includes.Local(d.Require)
+			if err != nil {
+				return nil, cling.Wrap(err, "unable to get proto includes from local")
+			}
+			mods = append(mods, gms...)
+		default:
+			return nil, cling.Errorf("unable to get proto includes from %s", d.Type)
+		}
+	}
+
+	return mods, nil
 }

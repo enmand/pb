@@ -1,19 +1,19 @@
-package main
+package includes
 
 import (
 	"fmt"
 	"strings"
 )
 
-// module represents a module that containing *.proto files
-type module struct {
+// Module represents a Module that containing *.proto files
+type Module struct {
 	Name        string
 	Path        string
 	CleanupFunc func() error
 }
 
 // Cleanup cleans up any temporary directories that were created
-func (m *module) Cleanup() error {
+func (m *Module) Cleanup() error {
 	if m.CleanupFunc != nil {
 		err := m.CleanupFunc()
 		if err != nil {
@@ -25,7 +25,7 @@ func (m *module) Cleanup() error {
 }
 
 // Cleanup cleans up modules in this module set
-func (m *modules) Cleanup() error {
+func (m *Modules) Cleanup() error {
 	for _, mod := range *m {
 		err := mod.Cleanup()
 		if err != nil {
@@ -37,15 +37,15 @@ func (m *modules) Cleanup() error {
 }
 
 // String returns the string representation of this module
-func (m *module) String() string {
+func (m *Module) String() string {
 	return m.Path
 }
 
-type modules []module
+type Modules []Module
 
 // String returns the string representation of this module set. The moduleset
 // is separated by `:`
-func (m *modules) String() string {
+func (m *Modules) String() string {
 	paths := []string{}
 	for _, mod := range *m {
 		paths = append(paths, mod.String())
