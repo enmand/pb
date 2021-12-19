@@ -1,6 +1,6 @@
 package includes
 
-import "github.com/unerror/id-hub/tools/protoc/internal/config"
+import "github.com/enmand/pb/internal/config"
 
 // Local loads local paths with the name in the key and the local path in the
 // value

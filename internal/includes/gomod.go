@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/jbowes/cling"
-	"github.com/unerror/id-hub/tools/protoc/internal/config"
+	"github.com/enmand/pb/internal/config"
 )
 
 // goModules returns the modules that contain *.proto files

@@ -9,7 +9,7 @@ import (
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/jbowes/cling"
-	"github.com/unerror/id-hub/tools/protoc/internal/config"
+	"github.com/enmand/pb/internal/config"
 )
 
 func GitDependencies(dep config.Dependency, cache string) (*Module, error) {

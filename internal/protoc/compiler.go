@@ -6,8 +6,8 @@ import (
 	"strings"
 
 	"github.com/jbowes/cling"
-	"github.com/unerror/id-hub/tools/protoc/internal/config"
-	"github.com/unerror/id-hub/tools/protoc/internal/includes"
+	"github.com/enmand/pb/internal/config"
+	"github.com/enmand/pb/internal/includes"
 )
 
 type Compiler struct {

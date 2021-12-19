@@ -4,8 +4,8 @@ import (
 	"flag"
 	"os"
 
-	"github.com/unerror/id-hub/tools/protoc/internal/config"
-	"github.com/unerror/id-hub/tools/protoc/internal/protoc"
+	"github.com/enmand/pb/internal/config"
+	"github.com/enmand/pb/internal/protoc"
 )
 
 func main() {
