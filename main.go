@@ -8,16 +8,15 @@ import (
 	"path/filepath"
 
 	"github.com/jbowes/cling"
+	"github.com/unerror/id-hub/tools/protoc/config"
 	"github.com/unerror/id-hub/tools/protoc/includes"
-	"github.com/unerror/id-hub/tools/protoc/mod"
 )
 
 func main() {
 	path := flag.String("proto-path", "", "proto file(s) to compile")
 	swaggerOut := flag.String("swagger-out", ".", "output path")
-	includeRemote := flag.String("config", "", "protoc tool config file")
+	configFile := flag.String("config", "", "protoc tool config file")
 	flag.Parse()
-
 	if swaggerOut != nil {
 		cwd, err := os.Getwd()
 		if err != nil {
@@ -33,7 +32,12 @@ func main() {
 		path = &p
 	}
 
-	mods, err := getIncludes(*includeRemote)
+	cfg, err := config.Parse(*configFile)
+	if err != nil {
+		panic(err)
+	}
+
+	mods, err := getIncludes(cfg)
 	if err != nil {
 		panic(err)
 	}
@@ -62,16 +66,11 @@ func main() {
 	}
 }
 
-func getIncludes(remotes string) (includes.Modules, error) {
-	f, err := mod.Parse(remotes)
-	if err != nil {
-		return nil, cling.Wrap(err, "unable to parse go.mod")
-	}
-
+func getIncludes(f *config.Config) (includes.Modules, error) {
 	mods := includes.Modules{}
 
 	if f.Go != nil {
-		gms, err := includes.GoMod()
+		gms, err := includes.GoMod(f.Go)
 		if err != nil {
 			return nil, cling.Wrap(err, "unable to get proto includes from go modules")
 		}
@@ -82,17 +81,17 @@ func getIncludes(remotes string) (includes.Modules, error) {
 	for _, d := range f.Dependencies {
 		switch d.Type {
 		case "git":
-			gms, err := includes.Git(d.Require, d.Cache)
+			gm, err := includes.Git(d, f.Cache)
 			if err != nil {
 				return nil, cling.Wrap(err, "unable to get proto includes from git")
 			}
-			mods = append(mods, gms...)
+			mods = append(mods, *gm)
 		case "local":
-			gms, err := includes.Local(d.Require)
+			lm, err := includes.Local(d)
 			if err != nil {
 				return nil, cling.Wrap(err, "unable to get proto includes from local")
 			}
-			mods = append(mods, gms...)
+			mods = append(mods, lm)
 		default:
 			return nil, cling.Errorf("unable to get proto includes from %s", d.Type)
 		}

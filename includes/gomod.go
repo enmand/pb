@@ -8,18 +8,13 @@ import (
 	"strings"
 
 	"github.com/jbowes/cling"
+	"github.com/unerror/id-hub/tools/protoc/config"
 )
 
-var ignorePaths = []string{
-	"vendor",
-	"test",
-	"example",
-	"internal",
-}
-
 // goModules returns the modules that contain *.proto files
-func GoMod() (Modules, error) {
+func GoMod(cfg *config.Go) (Modules, error) {
 	mods := exec.Command("go", "list", "-f", "{{.Path}}={{.Dir}}", "-m", "all")
+	mods.Dir = filepath.Dir(cfg.Path)
 	mods.Stderr = os.Stderr
 	out, err := mods.Output()
 	if err != nil {
@@ -43,9 +38,11 @@ func GoMod() (Modules, error) {
 				return err
 			}
 
-			for _, ignore := range ignorePaths {
-				if strings.Contains(path, ignore) {
-					return nil
+			if cfg.Ignores != nil {
+				for _, ignore := range *cfg.Ignores {
+					if strings.Contains(path, ignore) {
+						return nil
+					}
 				}
 			}
 
