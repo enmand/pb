@@ -9,10 +9,10 @@ import (
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/jbowes/cling"
-	"github.com/unerror/id-hub/tools/protoc/config"
+	"github.com/unerror/id-hub/tools/protoc/internal/config"
 )
 
-func Git(dep config.Dependency, cache string) (*Module, error) {
+func GitDependencies(dep config.Dependency, cache string) (*Module, error) {
 	// iterate over the deps where the key is the repository URL and the value is the version
 	// (commit or tag) to clone each repository using github.com/go-git/go-git/v5
 

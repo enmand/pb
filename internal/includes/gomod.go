@@ -8,11 +8,11 @@ import (
 	"strings"
 
 	"github.com/jbowes/cling"
-	"github.com/unerror/id-hub/tools/protoc/config"
+	"github.com/unerror/id-hub/tools/protoc/internal/config"
 )
 
 // goModules returns the modules that contain *.proto files
-func GoMod(cfg *config.Go) (Modules, error) {
+func GoModDependencies(cfg config.Go) (Modules, error) {
 	mods := exec.Command("go", "list", "-f", "{{.Path}}={{.Dir}}", "-m", "all")
 	mods.Dir = filepath.Dir(cfg.Path)
 	mods.Stderr = os.Stderr

@@ -1,7 +1,6 @@
 package config
 
 import (
-	"fmt"
 	"path/filepath"
 	"strings"
 
@@ -15,8 +14,17 @@ const DEFAULT_CACHE = ".protoc-cache"
 type Config struct {
 	Go           *Go          `hcl:"go,block"`
 	Dependencies []Dependency `hcl:"dependency,block"`
+	Plugins      []Plugin     `hcl:"plugin,block"`
 	cache        *string      `hcl:"cache,attr"`
 	Cache        string
+}
+
+type Plugin struct {
+	Name        string  `hcl:"name,label"`
+	PathResolve *string `hcl:"path,attr"`
+	Path        string
+	RelPath     *string            `hcl:"rel_path,attr"`
+	Options     *map[string]string `hcl:"options,attr"`
 }
 
 // Go represents go.mod configuration for the protoc tool
@@ -30,11 +38,6 @@ type Dependency struct {
 	Type    string `hcl:"type,label"`
 	Name    string `hcl:"name,label"`
 	Version string `hcl:"version"`
-}
-
-// String returns a string representation of the dependency
-func (d *Dependency) String() string {
-	return fmt.Sprintf("%s %s %s", d.Type, d.Name, d.Version)
 }
 
 func Parse(path string) (*Config, error) {
@@ -66,6 +69,15 @@ func Parse(path string) (*Config, error) {
 			cfg.Cache = cache
 		}
 	}
+
+	resolved := []Plugin{}
+	for _, p := range cfg.Plugins {
+		if p.PathResolve != nil && !strings.HasPrefix(*p.PathResolve, "/") {
+			p.Path = filepath.Join(dir, *p.PathResolve)
+		}
+		resolved = append(resolved, p)
+	}
+	cfg.Plugins = resolved
 
 	return cfg, nil
 }
