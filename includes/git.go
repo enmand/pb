@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
@@ -52,12 +53,19 @@ func Git(dep config.Dependency, cache string) (*Module, error) {
 
 	// clone the repo
 	r, err := git.PlainClone(path, false, &git.CloneOptions{
-		URL:      fmt.Sprintf("git://git@%s", dep.Name),
-		Progress: os.Stdout,
+		URL:          fmt.Sprintf("git://git@%s", dep.Name),
+		SingleBranch: true,
+		Depth:        1,
+		Progress:     os.Stdout,
 	})
 	if err != nil {
 		return nil, cling.Wrap(err, "unable to clone repo")
 	}
+
+	r.RepackObjects(&git.RepackConfig{
+		UseRefDeltas:             false,
+		OnlyDeletePacksOlderThan: time.Now(),
+	})
 
 	// get the commit hash for the version
 	commit, err := r.ResolveRevision(plumbing.Revision(dep.Version))
